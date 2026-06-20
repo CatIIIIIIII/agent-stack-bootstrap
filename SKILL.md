@@ -27,6 +27,7 @@ Explicitly exclude WeCom for now: do not migrate `channels.wecom`, WeCom binding
   - `ikuncode-opus`: `https://api.ikuncode.cc/v1`, `openai-completions`, model `claude-opus-4-8`, context `1000000`, output `4096`, text+image, reasoning.
   - `deepseek`: `https://api.deepseek.com`, `openai-completions`, model `deepseek-v4-pro`, output `4096`, text, reasoning.
 - OpenClaw tools profile `coding`; SearXNG search configured at `http://127.0.0.1:8080`.
+- OpenClaw exec policy intentionally uses YOLO mode for this trusted single-user host: `security=full`, `ask=off`, and host approvals synchronized with `openclaw exec-policy preset yolo`.
 - OpenClaw plugins:
   - `headroom` enabled, context engine slot, current plugin source `~/headroom/plugins/openclaw`, version `0.26.0`, upstream `https://github.com/chopratejas/headroom`, audited commit `9f7f3adf`.
   - `agentmemory` enabled, memory slot, server `http://localhost:3111`, plugin version `0.9.4`, global server package `@agentmemory/agentmemory@0.9.27`.
@@ -142,6 +143,12 @@ const patch = {
   session: { dmScope: 'per-channel-peer' },
   tools: {
     profile: 'coding',
+    exec: {
+      host: 'auto',
+      mode: 'full',
+      security: 'full',
+      ask: 'off'
+    },
     web: { search: { provider: 'searxng', enabled: true } }
   },
   models: {
@@ -258,6 +265,13 @@ NODE
 ```
 
 Never add WeCom entries while applying this patch.
+
+Synchronize the local config and host approvals for the audited YOLO exec mode. This is intentionally permissive; use it only on a trusted single-user machine.
+
+```bash
+openclaw exec-policy preset yolo
+openclaw exec-policy show
+```
 
 Install and start the gateway as a user/system service:
 
@@ -428,6 +442,16 @@ In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the re
 If there is no `.codegraph/` directory, skip CodeGraph entirely - indexing is the user's decision.
 <!-- CODEGRAPH_END -->
 ```
+
+Install the bundled CodeGraph workspace skill from this Git checkout when available:
+
+```bash
+mkdir -p "$HOME/.openclaw/workspace/skills"
+rsync -a ./skills/codegraph/ "$HOME/.openclaw/workspace/skills/codegraph/"
+python3 "$HOME/.openclaw/workspace/skills/codegraph/scripts/analyze.py" "$HOME/.openclaw/workspace/skills/codegraph" --query stats
+```
+
+The bundled skill is separate from the `@colbymchenry/codegraph` MCP package above. It provides a lightweight local AST summary script for Python, JavaScript/TypeScript, and Ruby projects.
 
 ## Configure OpenCode and OMO
 
@@ -602,6 +626,7 @@ Current workspace skills to preserve:
 - `nature-academic-search`
 - `nature-polishing`
 - `nature-figure`
+- `codegraph`
 - `ubuntu-agent-stack-bootstrap`
 
 Copy from the old machine when available:
@@ -620,13 +645,15 @@ Run all checks after installation:
 
 ```bash
 openclaw config validate
+openclaw exec-policy show
 openclaw plugins doctor
 openclaw gateway status
-openclaw skills list | rg 'ubuntu-agent-stack-bootstrap|agent-browser|self-improving-agent|nature-'
+openclaw skills list | rg 'ubuntu-agent-stack-bootstrap|codegraph|agent-browser|self-improving-agent|nature-'
 curl -fsS http://127.0.0.1:3111/agentmemory/health
 curl -fsS http://127.0.0.1:8787/stats || true
 bunx oh-my-openagent doctor --json
 codegraph --version
+python3 "$HOME/.openclaw/workspace/skills/codegraph/scripts/analyze.py" "$HOME/.openclaw/workspace/skills/codegraph" --query stats
 sg --version
 opencode --version
 ```
