@@ -1,13 +1,23 @@
 ---
-name: ubuntu-agent-stack-bootstrap
-description: Recreate this user's audited OpenClaw and OpenCode agent stack on Ubuntu. Use when installing, migrating, repairing, or documenting OpenClaw with local gateway, IkunCode and DeepSeek providers, Headroom context compression, AgentMemory long-term memory, CodeGraph, OpenCode, Oh My OpenAgent, optional SearXNG search, and workspace skills. Excludes WeCom channel/plugin setup.
+name: agent-stack-bootstrap
+description: Recreate this user's audited OpenClaw and OpenCode agent stack on a fresh Linux host. Use when installing, migrating, repairing, or documenting OpenClaw with local gateway, IkunCode and DeepSeek providers, Headroom context compression, AgentMemory long-term memory, CodeGraph, OpenCode, Oh My OpenAgent, optional SearXNG search, and workspace skills. Excludes WeCom channel/plugin setup.
 ---
 
-# Ubuntu Agent Stack Bootstrap
+# Agent Stack Bootstrap
 
 ## Scope
 
-Use this runbook to recreate the user's current agent environment on a fresh Ubuntu host. It captures the audited macOS machine state as of 2026-06-19 and translates paths/services to Ubuntu.
+Use this runbook to recreate the user's current agent environment on a fresh Linux host. It captures the audited macOS machine state as of 2026-06-19 and translates paths/services to Linux.
+
+## Required User Check
+
+After this skill is installed and before applying any model/provider configuration, proactively ask whether the user has API access for:
+
+- IkunCode `gpt-5.5`
+- IkunCode `claude-opus-4-8`
+- DeepSeek `deepseek-v4-pro`
+
+Ask about access, not secret values. Do not request API keys in chat. Tell the user to provide keys through local environment variables or a password manager. If any access is missing, pause the provider patch or adapt the model configuration before continuing.
 
 Do not copy secrets into logs or committed files. Use environment variables or a local password manager for:
 
@@ -40,7 +50,7 @@ Explicitly exclude WeCom for now: do not migrate `channels.wecom`, WeCom binding
 
 ## Install Prerequisites
 
-Run on Ubuntu with a normal sudo-capable user:
+Run on a Debian-family Linux host with a normal sudo-capable user:
 
 ```bash
 sudo apt update
@@ -331,7 +341,7 @@ systemctl --user daemon-reload
 systemctl --user enable --now headroom
 ```
 
-If the plugin install path differs, update `plugins.load.paths` in OpenClaw to point at the installed plugin. On Ubuntu, prefer `/usr/bin/python3` or omit `pythonPath`; do not reuse macOS `/usr/local/bin/python3` blindly.
+If the plugin install path differs, update `plugins.load.paths` in OpenClaw to point at the installed plugin. On Linux, prefer `/usr/bin/python3` or omit `pythonPath`; do not reuse macOS `/usr/local/bin/python3` blindly.
 
 ## Install AgentMemory
 
@@ -627,7 +637,7 @@ Current workspace skills to preserve:
 - `nature-polishing`
 - `nature-figure`
 - `codegraph`
-- `ubuntu-agent-stack-bootstrap`
+- `agent-stack-bootstrap`
 
 Copy from the old machine when available:
 
@@ -648,7 +658,7 @@ openclaw config validate
 openclaw exec-policy show
 openclaw plugins doctor
 openclaw gateway status
-openclaw skills list | rg 'ubuntu-agent-stack-bootstrap|codegraph|agent-browser|self-improving-agent|nature-'
+openclaw skills list | rg 'agent-stack-bootstrap|codegraph|agent-browser|self-improving-agent|nature-'
 curl -fsS http://127.0.0.1:3111/agentmemory/health
 curl -fsS http://127.0.0.1:8787/stats || true
 bunx oh-my-openagent doctor --json

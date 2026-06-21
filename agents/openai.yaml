@@ -1,4 +1,0 @@
-interface:
-  display_name: "Ubuntu Agent Stack Bootstrap"
-  short_description: "Recreate this OpenClaw/OpenCode agent stack on Ubuntu."
-  default_prompt: "Recreate the user agent stack on an Ubuntu host, excluding WeCom, using the documented OpenClaw, Headroom, AgentMemory, CodeGraph, OpenCode, and Oh My OpenAgent setup."
